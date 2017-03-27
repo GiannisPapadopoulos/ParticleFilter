@@ -29,18 +29,29 @@ void MyLocalizer::initialisePF( const geometry_msgs::PoseWithCovarianceStamped& 
     int width = map.info.width;
     int height = map.info.height;
 
-    ROS_INFO("width %d", width);
-    ROS_INFO("height %d", height);
+    ROS_INFO("map dims %d %d", width, height);
+
+    float x = initialpose.pose.pose.position.x;
+    float y = initialpose.pose.pose.position.x;
+
+    ROS_INFO("initialPose %f %f", x, y);
 
     random_numbers::RandomNumberGenerator rng;
-    double g = rng.gaussian(1, 5);
 
-    ROS_INFO("g %f", g);
+    bool gaussian_particle_init = false;
 
-    for (unsigned int i = 0; i < particleCloud.poses.size(); ++i)
-	{
-		particleCloud.poses[i].position.x = i;
-		particleCloud.poses[i].position.y = i;
+    for (unsigned int i = 0; i < particleCloud.poses.size(); ++i) {
+
+        if(gaussian_particle_init) {
+            // Gaussian centered to initial pose
+            particleCloud.poses[i].position.x = rng.gaussian(x, width / 30);
+            particleCloud.poses[i].position.y = rng.gaussian(y,  height / 30);
+        }
+        else {
+            // Random grid
+            particleCloud.poses[i].position.x = map.info.width * map.info.resolution * rng.uniform01();
+            particleCloud.poses[i].position.y = map.info.height * map.info.resolution * rng.uniform01();
+        }
 		geometry_msgs::Quaternion odom_quat = tf::createQuaternionMsgFromYaw(i*0.1);
 		particleCloud.poses[i].orientation = odom_quat;
 	}
